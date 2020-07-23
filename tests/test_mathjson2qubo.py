@@ -3,13 +3,13 @@ import random
 from expects import expect, raise_error
 from expects.matchers.built_in.equal import equal
 from mamba import before, context, description, it
-from mathjson2qubo.parser import Parser
-from mathjson2qubo.parser_exeptions import (
+from mathjson2qubo.errors import (
     InvalidSubScriptError,
     InvalidSuperScriptError,
     NotFoundVariableError,
     VariableIndexOutOfRangeError,
 )
+from mathjson2qubo.parser import Parser
 
 with description("Parser") as self:
     with before.each:
