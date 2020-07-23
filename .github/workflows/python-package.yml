@@ -17,3 +17,10 @@ jobs:
     - name: Test with mamba
       run: |
         poetry run mamba --enable-coverage tests/*
+        poetry run coverage xml
+    - name: Upload coverage to codecov
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.xml
+        flags: unittests
