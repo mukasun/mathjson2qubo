@@ -12,3 +12,11 @@ class VariableIndexOutOfRangeError(ParserError):
 
 class InvalidMathJsonFormatError(ParserError):
     pass
+
+
+class InvalidSubScriptError(ParserError):
+    pass
+
+
+class InvalidSuperScriptError(ParserError):
+    pass
