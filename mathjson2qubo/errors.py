@@ -20,3 +20,27 @@ class InvalidSubScriptError(ParserError):
 
 class InvalidSuperScriptError(ParserError):
     pass
+
+
+class InvalidSumFuncError(ParserError):
+    pass
+
+
+class NotFoundIndexVariableOfSumError(ParserError):
+    pass
+
+
+class InvalidStartIndexOfSumError(ParserError):
+    pass
+
+
+class InvalidEndIndexOfSumError(ParserError):
+    pass
+
+
+class InvalidSubtractionArgumentsError(ParserError):
+    pass
+
+
+class InvalidDivisionArgumentsError(ParserError):
+    pass
