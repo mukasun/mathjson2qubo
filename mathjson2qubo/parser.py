@@ -1,7 +1,10 @@
 from functools import reduce
-from typing import Callable, Dict, List, Union
+from typing import Callable, Dict, List, TypedDict, Union, cast
 
-from pyqubo import Array, Express, Sum
+import numpy as np
+import pyqubo
+from pyqubo import Array, Constraint, Express, Placeholder, Sum, solve_ising, solve_qubo
+from pyqubo.core.express import Binary, Spin
 
 from mathjson2qubo.errors import (
     InvalidDivisionArgumentsError,
@@ -14,22 +17,79 @@ from mathjson2qubo.errors import (
     InvalidSuperScriptError,
     NotFoundIndexVariableOfSumError,
     NotFoundVariableError,
+    ParserInitArgumentsError,
+    UndefinedVariableTypeError,
     VariableIndexOutOfRangeError,
 )
+
+from .model import Model
 
 ComputableTerm = Union[float, Express]
 Term = Union[float, List[int], Express]
 
 
+class Variable(TypedDict):
+    symbol: str
+    dimension: int
+    size: Union[int, tuple]
+
+
+class Constant(TypedDict):
+    symbol: str
+    values: Union[int, float, list]
+
+
+class ObjectiveTerm(TypedDict):
+    label: str
+    tex: dict
+    weight: float
+
+
+class ConstraintTerm(TypedDict):
+    label: str
+    tex: dict
+    weight: float
+
+
 class Parser:
-    def __init__(self, variable, constants=[]):
-        self.x = None
-        variable_array = Array.create(
-            variable["label"], variable["size"], variable["type"].upper()
-        )
-        exec("self.{} = variable_array".format(variable["label"]))
-        for c in constants:
-            exec("self.{} = c['values']".format(c["label"]))
+    def __init__(
+        self, vartype: str, variables: List[Variable], constants: List[Constant] = []
+    ):
+        # set variable type
+        self.vartype: str = vartype.upper()
+        self.x = np.array([[]])  # for test
+        if self.vartype not in ["SPIN", "BINARY"]:
+            raise ParserInitArgumentsError(
+                code=1001, message="vartype must be 'spin' or 'binary'."
+            )
+
+        # set variables
+        for variable in variables:
+            if len(variable["symbol"]) != 1:
+                raise ParserInitArgumentsError(
+                    code=1002, message="variable symbol must be one character."
+                )
+
+            if variable["dimension"] > 0:
+                var = Array.create(variable["symbol"], variable["size"], self.vartype)
+            elif variable["dimension"] == 0:
+                if self.vartype == "SPIN":
+                    var = Spin(variable["symbol"])
+                else:
+                    var = Binary(variable["symbol"])
+            else:
+                raise ParserInitArgumentsError(
+                    code=1003, message="variable dimension must be positive integer."
+                )
+            exec("self.{} = var".format(variable["symbol"]))
+
+        # set constants
+        for constant in constants:
+            if isinstance(constant["values"], (int, float)):
+                const = float(constant["values"])
+            elif isinstance(constant["values"], list):
+                const = np.array(constant["values"])
+            exec("self.{} = const".format(constant["symbol"]))
 
     @property
     def funcs(self) -> Dict[str, Callable]:
@@ -113,7 +173,7 @@ class Parser:
         superscript = self.parse_mathjson(arg["sup"], index)
         if isinstance(superscript, (Express, list)):
             raise InvalidSuperScriptError()
-        return base ** superscript
+        return base ** int(superscript)
 
     def _sub(self, arg: dict, index: Dict[str, int] = None) -> ComputableTerm:
         subscript = self.parse_mathjson(arg["sub"], index)
@@ -160,3 +220,74 @@ class Parser:
             raise InvalidMathJsonFormatError()
 
         return result
+
+    def _to_pyqubo_model(
+        self,
+        objective_terms: List[ObjectiveTerm] = [],
+        constraint_terms: List[ConstraintTerm] = [],
+    ) -> pyqubo.Model:
+        objectives = [
+            Placeholder(o["label"]) * self.parse_mathjson(o["tex"])
+            for o in objective_terms
+        ]
+        constraints = [
+            Placeholder(c["label"])
+            * Constraint(self.parse_mathjson(c["tex"]), label=c["label"])
+            for c in constraint_terms
+        ]
+        H = cast(Express, sum(objectives) + sum(constraints))
+        pyqubo_model = H.compile()
+        return pyqubo_model
+
+    def solve(
+        self,
+        objective_terms: List[ObjectiveTerm] = [],
+        constraint_terms: List[ConstraintTerm] = [],
+        num_reads=10,
+        sweeps=1000,
+        start_temp=1.0,
+        end_temp=0.02,
+    ):
+        pyqubo_model = self._to_pyqubo_model(objective_terms, constraint_terms)
+        feed_dict = {}
+        feed_dict.update({o["label"]: o["weight"] for o in objective_terms})
+        feed_dict.update({c["label"]: c["weight"] for c in constraint_terms})
+        beta_range = (1.0 / start_temp, 1.0 / end_temp)
+
+        if self.vartype == "SPIN":
+            linear, quad, offset = pyqubo_model.to_ising(feed_dict=feed_dict)
+            solution = solve_ising(
+                linear, quad, num_reads=num_reads, sweeps=sweeps, beta_range=beta_range
+            )
+        elif self.vartype == "BINARY":
+            model, offset = pyqubo_model.to_qubo(feed_dict=feed_dict)
+            solution = solve_qubo(
+                model, num_reads=num_reads, sweeps=sweeps, beta_range=beta_range
+            )
+        else:
+            raise UndefinedVariableTypeError()
+
+        return pyqubo_model.decode_solution(
+            solution, vartype=self.vartype, feed_dict=feed_dict
+        )
+
+    def to_matrix(
+        self,
+        objective_terms: List[ObjectiveTerm] = [],
+        constraint_terms: List[ConstraintTerm] = [],
+    ):
+        pyqubo_model = self._to_pyqubo_model(objective_terms, constraint_terms)
+        feed_dict = {}
+        feed_dict.update({o["label"]: o["weight"] for o in objective_terms})
+        feed_dict.update({c["label"]: c["weight"] for c in constraint_terms})
+
+        if self.vartype == "SPIN":
+            model = pyqubo_model.to_ising(feed_dict=feed_dict)
+        elif self.vartype == "BINARY":
+            model = pyqubo_model.to_qubo(feed_dict=feed_dict)
+        else:
+            raise UndefinedVariableTypeError()
+
+        print(model)
+
+        return Model.make_model_from_tuple(model)

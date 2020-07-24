@@ -1,6 +1,5 @@
 import random
 
-import numpy as np
 from expects import expect, raise_error
 from expects.matchers.built_in.equal import equal
 from mamba import before, context, description, it
@@ -15,16 +14,60 @@ from mathjson2qubo.errors import (
     InvalidSuperScriptError,
     NotFoundIndexVariableOfSumError,
     NotFoundVariableError,
+    ParserInitArgumentsError,
     VariableIndexOutOfRangeError,
 )
 from mathjson2qubo.parser import Parser
 from pyqubo import Sum
+from pyqubo.core.express import Binary, Spin
 
 with description("Parser") as self:
     with before.each:
         self.parser = Parser(
-            {"type": "binary", "dimension": 1, "size": 4, "label": "x"}
+            vartype="binary", variables=[{"dimension": 1, "size": 4, "symbol": "x"}]
         )
+
+    with description("__init__()"):
+        with context("call with invalid vartype"):
+            with it("raise ParserInitArgumentsError"):
+                expect(lambda: Parser(vartype="hoge", variables=[])).to(
+                    raise_error(ParserInitArgumentsError)
+                )
+
+        with context("call with variable whose symbol is more than 2 characters"):
+            with it("raise ParserInitArgumentsError"):
+                expect(
+                    lambda: Parser(
+                        vartype="spin",
+                        variables=[{"symbol": "s1", "dimension": 0, "size": 0}],
+                    )
+                ).to(raise_error(ParserInitArgumentsError))
+
+        with context("call with variable whose dimension is negative"):
+            with it("raise ParserInitArgumentsError"):
+                expect(
+                    lambda: Parser(
+                        vartype="spin",
+                        variables=[{"symbol": "s", "dimension": -1, "size": 0}],
+                    )
+                ).to(raise_error(ParserInitArgumentsError))
+
+        with context("call with variable whose dimension is 0"):
+            with context("vartype is spin"):
+                with it("set single spin"):
+                    parser = Parser(
+                        vartype="spin",
+                        variables=[{"symbol": "x", "dimension": 0, "size": 0}],
+                    )
+                    expect(parser.x).to(equal(Spin("x")))
+
+            with context("vartype is binary"):
+                with it("set single binary"):
+                    parser = Parser(
+                        vartype="binary",
+                        variables=[{"symbol": "x", "dimension": 0, "size": 0}],
+                    )
+                    expect(parser.x).to(equal(Binary("x")))
 
     with description("_fn_add()"):
         with it("return convorutional sum"):
@@ -92,10 +135,11 @@ with description("Parser") as self:
             self.size = 4
             self.constant_values = [1, 2, 3, 4]
             self.parser = Parser(
-                {"type": "binary", "dimension": 1, "size": self.size, "label": "x",},
-                [
-                    {"label": "N", "values": self.size},
-                    {"label": "n", "values": self.constant_values},
+                vartype="binary",
+                variables=[{"dimension": 1, "size": self.size, "symbol": "x"}],
+                constants=[
+                    {"symbol": "N", "values": self.size},
+                    {"symbol": "n", "values": self.constant_values},
                 ],
             )
 
@@ -230,17 +274,15 @@ with description("Parser") as self:
         with context("call w/ valid args (quadratic variable)"):
             with before.each:
                 self.size = 3
-                self.constants = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+                self.constants = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
                 self.parser = Parser(
-                    {
-                        "type": "binary",
-                        "dimension": 2,
-                        "size": [self.size, self.size],
-                        "label": "x",
-                    },
-                    [
-                        {"label": "N", "values": self.size},
-                        {"label": "n", "values": self.constants},
+                    vartype="binary",
+                    variables=[
+                        {"dimension": 2, "size": (self.size, self.size), "symbol": "x"},
+                    ],
+                    constants=[
+                        {"symbol": "N", "values": self.size},
+                        {"symbol": "n", "values": self.constants},
                     ],
                 )
 
@@ -330,12 +372,14 @@ with description("Parser") as self:
                 self.variable_label = "x"
                 self.variable_size = 4
                 self.parser = Parser(
-                    {
-                        "type": "binary",
-                        "dimension": 1,
-                        "size": self.variable_size,
-                        "label": self.variable_label,
-                    }
+                    vartype="binary",
+                    variables=[
+                        {
+                            "dimension": 1,
+                            "size": self.variable_size,
+                            "symbol": self.variable_label,
+                        }
+                    ],
                 )
 
             with context("call with the collect args"):
@@ -386,12 +430,14 @@ with description("Parser") as self:
                 self.variable_label = "x"
                 self.variable_size = (4, 4)
                 self.parser = Parser(
-                    {
-                        "type": "binary",
-                        "dimension": 2,
-                        "size": self.variable_size,
-                        "label": self.variable_label,
-                    }
+                    vartype="binary",
+                    variables=[
+                        {
+                            "dimension": 2,
+                            "size": self.variable_size,
+                            "symbol": self.variable_label,
+                        }
+                    ],
                 )
 
             with context("call with the collect args"):
@@ -431,13 +477,17 @@ with description("Parser") as self:
             self.constant_label = "n"
             self.constant_value = 10
             self.parser = Parser(
-                {
-                    "type": "binary",
-                    "dimension": 1,
-                    "size": self.variable_size,
-                    "label": self.variable_label,
-                },
-                [{"label": self.constant_label, "values": self.constant_value}],
+                vartype="binary",
+                variables=[
+                    {
+                        "dimension": 1,
+                        "size": self.variable_size,
+                        "symbol": self.variable_label,
+                    },
+                ],
+                constants=[
+                    {"symbol": self.constant_label, "values": self.constant_value}
+                ],
             )
 
         with context("invalid mathjson"):

@@ -1,4 +1,13 @@
 class ParserError(Exception):
+    def __init__(self, code: int = 0, message: str = "") -> None:
+        self.code = code
+        self.message = message
+
+    def __str__(self) -> str:
+        return "[ERROR: {}]: {}".format(self.code, self.message)
+
+
+class ParserInitArgumentsError(ParserError):
     pass
 
 
@@ -43,4 +52,8 @@ class InvalidSubtractionArgumentsError(ParserError):
 
 
 class InvalidDivisionArgumentsError(ParserError):
+    pass
+
+
+class UndefinedVariableTypeError(ParserError):
     pass
