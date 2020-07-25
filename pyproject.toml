@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mathjson2qubo"
-version = "0.1.1"
+version = "0.1.2"
 description = "mathjson2qubo allows you to convert MathJSON into PyQUBO model."
 authors = ["Yosuke Mukasa"]
 repository = "https://github.com/mks1412/mathjson2qubo"
