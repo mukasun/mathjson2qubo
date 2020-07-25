@@ -25,7 +25,7 @@ Term = Union[float, List[int], Express]
 class Variable(TypedDict):
     symbol: str
     dimension: int
-    size: Union[int, tuple]
+    size: Union[int, list]
 
 
 class Constant(TypedDict):
@@ -64,13 +64,31 @@ class Parser:
                     code=1002, message="variable symbol must be one character."
                 )
 
-            if variable["dimension"] > 0:
-                var = Array.create(variable["symbol"], variable["size"], self.vartype)
-            elif variable["dimension"] == 0:
+            if variable["dimension"] == 0:
                 if self.vartype == "SPIN":
                     var = Spin(variable["symbol"])
                 else:
                     var = Binary(variable["symbol"])
+            elif variable["dimension"] == 1:
+                if isinstance(variable["size"], int):
+                    var = Array.create(
+                        variable["symbol"], variable["size"], self.vartype
+                    )
+                else:
+                    raise ParserInitArgumentsError(
+                        code=1004,
+                        message="if variable dimension is 1, variable size must be int.",
+                    )
+            elif variable["dimension"] >= 2:
+                if isinstance(variable["size"], list):
+                    var = Array.create(
+                        variable["symbol"], tuple(variable["size"]), self.vartype
+                    )
+                else:
+                    raise ParserInitArgumentsError(
+                        code=1005,
+                        message="if variable dimension is larger than 1, variable size must be list.",
+                    )
             else:
                 raise ParserInitArgumentsError(
                     code=1003, message="variable dimension must be positive integer."
