@@ -7,19 +7,13 @@ from pyqubo import Array, Constraint, Express, Placeholder, Sum, solve_ising, so
 from pyqubo.core.express import Binary, Spin
 
 from mathjson2qubo.errors import (
-    InvalidDivisionArgumentsError,
-    InvalidEndIndexOfSumError,
-    InvalidMathJsonFormatError,
-    InvalidStartIndexOfSumError,
-    InvalidSubScriptError,
-    InvalidSubtractionArgumentsError,
-    InvalidSumFuncError,
-    InvalidSuperScriptError,
-    NotFoundIndexVariableOfSumError,
-    NotFoundVariableError,
+    CalculationError,
+    MathJsonFormatError,
     ParserInitArgumentsError,
-    UndefinedVariableTypeError,
-    VariableIndexOutOfRangeError,
+    SubScriptError,
+    SumFunctionError,
+    SuperScriptError,
+    VariableAccessError,
 )
 
 from .model import Model
@@ -109,17 +103,13 @@ class Parser:
         return reduce(lambda x, y: x * y, args)
 
     def _fn_subtract(self, args: List[ComputableTerm]) -> ComputableTerm:
-        if len(args) != 2:
-            raise InvalidSubtractionArgumentsError()
         return args[0] - args[1]
 
     def _fn_divide(self, args: List[ComputableTerm]) -> ComputableTerm:
-        if len(args) != 2:
-            raise InvalidDivisionArgumentsError()
         try:
             return args[0] / args[1]
         except ZeroDivisionError:
-            raise InvalidDivisionArgumentsError()
+            raise CalculationError(code=5001, message="zero division error.")
 
     def _fn_negate(self, args: List[ComputableTerm]) -> ComputableTerm:
         return reduce(lambda x, y: x + y, map(lambda x: -x, args))
@@ -129,29 +119,43 @@ class Parser:
 
     def _fn_sum(self, arg: dict, index: Dict[str, int] = None) -> Express:
         if "sub" not in arg or "sup" not in arg:
-            raise InvalidSumFuncError()
+            raise SumFunctionError(
+                code=4001, message="sum function requires `sub` and `sup`."
+            )
 
         sub = arg["sub"]
         sup = arg["sup"]
 
         if sub["fn"] != "equal":
-            raise InvalidStartIndexOfSumError()
+            raise SumFunctionError(
+                code=4002, message="sub script of sum function must be equal function."
+            )
 
         if "sym" not in sub["arg"][0]:
-            raise NotFoundIndexVariableOfSumError()
+            raise SumFunctionError(
+                code=4003,
+                message="sum function requires an index variable (not constant).",
+            )
 
         if len(sub["arg"]) != 2:
-            raise InvalidStartIndexOfSumError()
+            raise SumFunctionError(
+                code=4004,
+                message="subscript of sum function must be the equation of 2 elements.",
+            )
 
         idx_sym: str = sub["arg"][0]["sym"]
         start_index = self.parse_mathjson(sub["arg"][1])
         end_index = self.parse_mathjson(sup)
 
         if not isinstance(start_index, float) or not float.is_integer(start_index):
-            raise InvalidStartIndexOfSumError()
+            raise SumFunctionError(
+                code=4005, message="start index of sum function must be integer.",
+            )
 
         if not isinstance(end_index, float) or not float.is_integer(end_index):
-            raise InvalidEndIndexOfSumError()
+            raise SumFunctionError(
+                code=4006, message="end index of sum function must be integer.",
+            )
 
         start_index = int(start_index) - 1
         end_index = int(end_index)
@@ -169,10 +173,10 @@ class Parser:
         self, base: Term, arg: dict, index: Dict[str, int] = None
     ) -> ComputableTerm:
         if isinstance(base, list):
-            raise InvalidSuperScriptError()
+            raise SuperScriptError(code=7001, message="cardinal must not be list.")
         superscript = self.parse_mathjson(arg["sup"], index)
         if isinstance(superscript, (Express, list)):
-            raise InvalidSuperScriptError()
+            raise SuperScriptError(code=7002, message="index must be number.")
         return base ** int(superscript)
 
     def _sub(self, arg: dict, index: Dict[str, int] = None) -> ComputableTerm:
@@ -181,16 +185,18 @@ class Parser:
             subscript = tuple(map(lambda x: x - 1, subscript))
         elif isinstance(subscript, float):
             if not float.is_integer(subscript):
-                raise InvalidSubScriptError()
+                raise SubScriptError(code=6001, message="subscript must be integer.")
             subscript = int(subscript) - 1
         else:
-            raise InvalidSubScriptError()
+            raise SubScriptError(code=6001, message="subscript must be integer.")
         try:
             return eval("self.{}[{}]".format(arg["sym"], subscript))
         except AttributeError:
-            raise NotFoundVariableError()
+            raise VariableAccessError(code=3001, message="not found the variable.")
         except (TypeError, IndexError):
-            raise VariableIndexOutOfRangeError()
+            raise VariableAccessError(
+                code=3002, message="variable index is out of range."
+            )
 
     def parse_mathjson(self, arg: dict, index: Dict[str, int] = None) -> Term:
         result = None
@@ -217,7 +223,10 @@ class Parser:
             result = self._sup(result, arg)
 
         if result is None:
-            raise InvalidMathJsonFormatError()
+            raise MathJsonFormatError(
+                code=2001,
+                message="mathjson object must be has one of the following (sym, num, fn).",
+            )
 
         return result
 
@@ -256,13 +265,11 @@ class Parser:
             solution = solve_ising(
                 linear, quad, num_reads=num_reads, sweeps=sweeps, beta_range=beta_range
             )
-        elif self.vartype == "BINARY":
+        else:
             model, offset = pyqubo_model.to_qubo(feed_dict=feed_dict)
             solution = solve_qubo(
                 model, num_reads=num_reads, sweeps=sweeps, beta_range=beta_range
             )
-        else:
-            raise UndefinedVariableTypeError()
 
         return pyqubo_model.decode_solution(
             solution, vartype=self.vartype, feed_dict=feed_dict
@@ -280,9 +287,7 @@ class Parser:
 
         if self.vartype == "SPIN":
             model = pyqubo_model.to_ising(feed_dict=feed_dict)
-        elif self.vartype == "BINARY":
-            model = pyqubo_model.to_qubo(feed_dict=feed_dict)
         else:
-            raise UndefinedVariableTypeError()
+            model = pyqubo_model.to_qubo(feed_dict=feed_dict)
 
         return Model.make_model_from_tuple(model)

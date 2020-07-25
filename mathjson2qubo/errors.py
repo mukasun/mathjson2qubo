@@ -1,5 +1,5 @@
 class ParserError(Exception):
-    def __init__(self, code: int = 0, message: str = "") -> None:
+    def __init__(self, code: int = 0, message: str = "parser error") -> None:
         self.code = code
         self.message = message
 
@@ -8,52 +8,35 @@ class ParserError(Exception):
 
 
 class ParserInitArgumentsError(ParserError):
-    pass
+    def __init__(self, code: int = 1000, message: str = "parser init arguments error."):
+        super().__init__(code, message)
 
 
-class NotFoundVariableError(ParserError):
-    pass
+class MathJsonFormatError(ParserError):
+    def __init__(self, code: int = 2000, message: str = "MathJson format error."):
+        super().__init__(code, message)
 
 
-class VariableIndexOutOfRangeError(ParserError):
-    pass
+class VariableAccessError(ParserError):
+    def __init__(self, code: int = 3000, message: str = "variable acess error."):
+        super().__init__(code, message)
 
 
-class InvalidMathJsonFormatError(ParserError):
-    pass
+class SumFunctionError(ParserError):
+    def __init__(self, code: int = 4000, message: str = "sum function error."):
+        super().__init__(code, message)
 
 
-class InvalidSubScriptError(ParserError):
-    pass
+class CalculationError(ParserError):
+    def __init__(self, code: int = 5000, message: str = "calculation error."):
+        super().__init__(code, message)
 
 
-class InvalidSuperScriptError(ParserError):
-    pass
+class SubScriptError(ParserError):
+    def __init__(self, code: int = 6000, message: str = "sub script error."):
+        super().__init__(code, message)
 
 
-class InvalidSumFuncError(ParserError):
-    pass
-
-
-class NotFoundIndexVariableOfSumError(ParserError):
-    pass
-
-
-class InvalidStartIndexOfSumError(ParserError):
-    pass
-
-
-class InvalidEndIndexOfSumError(ParserError):
-    pass
-
-
-class InvalidSubtractionArgumentsError(ParserError):
-    pass
-
-
-class InvalidDivisionArgumentsError(ParserError):
-    pass
-
-
-class UndefinedVariableTypeError(ParserError):
-    pass
+class SuperScriptError(ParserError):
+    def __init__(self, code: int = 7000, message: str = "super script error."):
+        super().__init__(code, message)
