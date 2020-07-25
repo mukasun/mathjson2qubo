@@ -5,12 +5,15 @@
   "python.linting.pycodestyleEnabled": false,
   "python.linting.flake8Enabled": true,
   "python.linting.flake8Args": [
-    "--ignore=W293, W504, D101, D102, F841",
+    "--ignore=W293, W503, W504, D101, D102, F841",
     "--max-line-length=150"
   ],
   "python.linting.mypyEnabled": true,
   "python.linting.mypyPath": "${workspaceFolder}/.venv/bin/mypy",
-  "python.linting.mypyArgs": ["--config-file", "mypy.ini"],
+  "python.linting.mypyArgs": [
+    "--config-file",
+    "mypy.ini"
+  ],
   "python.formatting.provider": "black",
   "python.formatting.blackPath": "${workspaceFolder}/.venv/bin/black",
   "python.sortImports.path": "${workspaceFolder}/.venv/bin/isort",
