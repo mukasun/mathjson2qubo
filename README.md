@@ -1,5 +1,6 @@
 # mathjson2qubo
 
+[![PyPI version](https://badge.fury.io/py/mathjson2qubo.svg)](https://badge.fury.io/py/mathjson2qubo)
 [![Test](https://github.com/mks1412/mathjson2qubo/workflows/Test/badge.svg)](https://github.com/mks1412/mathjson2qubo/actions?query=workflow%3ATest)
 [![codecov](https://codecov.io/gh/mks1412/mathjson2qubo/branch/master/graph/badge.svg)](https://codecov.io/gh/mks1412/mathjson2qubo)
 
@@ -68,6 +69,14 @@ mathjson2qubo generates PyQUBO model from mathematical expressions formatted Mat
 
 
 ## Example Usage
+
+### Install
+
+```
+pip install mathjson2qubo
+```
+
+
 We introduce the example of number partitioning.
 
 > Number partitioning is the task of deciding whether a given multiset S of positive integers can be partitioned into two subsets S1 and S2 such that the sum of the numbers in S1 equals the sum of the numbers in S2.
