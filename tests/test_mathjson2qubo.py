@@ -251,7 +251,7 @@ with description("Parser") as self:
                 self.parser = Parser(
                     vartype="binary",
                     variables=[
-                        {"dimension": 2, "size": (self.size, self.size), "symbol": "x"},
+                        {"dimension": 2, "size": [self.size, self.size], "symbol": "x"},
                     ],
                     constants=[
                         {"symbol": "N", "values": self.size},
@@ -401,7 +401,7 @@ with description("Parser") as self:
         with context("variable is quadratic"):
             with before.each:
                 self.variable_label = "x"
-                self.variable_size = (4, 4)
+                self.variable_size = [4, 4]
                 self.parser = Parser(
                     vartype="binary",
                     variables=[
