@@ -1,7 +1,7 @@
 # mathjson2qubo
 
 [![PyPI version](https://badge.fury.io/py/mathjson2qubo.svg)](https://badge.fury.io/py/mathjson2qubo)
-[![Test](https://github.com/mks1412/mathjson2qubo/workflows/Test/badge.svg)](https://github.com/mks1412/mathjson2qubo/actions?query=workflow%3ATest)
+![Package maintenance](https://github.com/mks1412/mathjson2qubo/workflows/Package%20maintenance/badge.svg)
 [![codecov](https://codecov.io/gh/mks1412/mathjson2qubo/branch/master/graph/badge.svg)](https://codecov.io/gh/mks1412/mathjson2qubo)
 
 > :warning: **This package is work in progress!**
