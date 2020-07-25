@@ -221,38 +221,35 @@ class Parser:
 
         return result
 
-    def _to_pyqubo_model(
+    def parse_to_pyqubo_model(
         self,
-        objective_terms: List[ObjectiveTerm] = [],
-        constraint_terms: List[ConstraintTerm] = [],
+        objectives: List[ObjectiveTerm] = [],
+        constraints: List[ConstraintTerm] = [],
     ) -> pyqubo.Model:
-        objectives = [
-            Placeholder(o["label"]) * self.parse_mathjson(o["tex"])
-            for o in objective_terms
+        parsed_objectives = [
+            Placeholder(o["label"]) * self.parse_mathjson(o["tex"]) for o in objectives
         ]
-        constraints = [
+        parsed_constraints = [
             Placeholder(c["label"])
             * Constraint(self.parse_mathjson(c["tex"]), label=c["label"])
-            for c in constraint_terms
+            for c in constraints
         ]
-        H = cast(Express, sum(objectives) + sum(constraints))
+        H = cast(Express, sum(parsed_objectives) + sum(parsed_constraints))
         pyqubo_model = H.compile()
         return pyqubo_model
 
     def solve(
         self,
-        objective_terms: List[ObjectiveTerm] = [],
-        constraint_terms: List[ConstraintTerm] = [],
+        objectives: List[ObjectiveTerm] = [],
+        constraints: List[ConstraintTerm] = [],
         num_reads=10,
         sweeps=1000,
-        start_temp=1.0,
-        end_temp=0.02,
+        beta_range=(1, 50),
     ):
-        pyqubo_model = self._to_pyqubo_model(objective_terms, constraint_terms)
+        pyqubo_model = self.parse_to_pyqubo_model(objectives, constraints)
         feed_dict = {}
-        feed_dict.update({o["label"]: o["weight"] for o in objective_terms})
-        feed_dict.update({c["label"]: c["weight"] for c in constraint_terms})
-        beta_range = (1.0 / start_temp, 1.0 / end_temp)
+        feed_dict.update({o["label"]: o["weight"] for o in objectives})
+        feed_dict.update({c["label"]: c["weight"] for c in constraints})
 
         if self.vartype == "SPIN":
             linear, quad, offset = pyqubo_model.to_ising(feed_dict=feed_dict)
@@ -273,13 +270,13 @@ class Parser:
 
     def to_matrix(
         self,
-        objective_terms: List[ObjectiveTerm] = [],
-        constraint_terms: List[ConstraintTerm] = [],
+        objectives: List[ObjectiveTerm] = [],
+        constraints: List[ConstraintTerm] = [],
     ):
-        pyqubo_model = self._to_pyqubo_model(objective_terms, constraint_terms)
+        pyqubo_model = self.parse_to_pyqubo_model(objectives, constraints)
         feed_dict = {}
-        feed_dict.update({o["label"]: o["weight"] for o in objective_terms})
-        feed_dict.update({c["label"]: c["weight"] for c in constraint_terms})
+        feed_dict.update({o["label"]: o["weight"] for o in objectives})
+        feed_dict.update({c["label"]: c["weight"] for c in constraints})
 
         if self.vartype == "SPIN":
             model = pyqubo_model.to_ising(feed_dict=feed_dict)
@@ -287,7 +284,5 @@ class Parser:
             model = pyqubo_model.to_qubo(feed_dict=feed_dict)
         else:
             raise UndefinedVariableTypeError()
-
-        print(model)
 
         return Model.make_model_from_tuple(model)
