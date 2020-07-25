@@ -268,7 +268,7 @@ class Parser:
             solution, vartype=self.vartype, feed_dict=feed_dict
         )
 
-    def to_matrix(
+    def parse_to_matrix(
         self,
         objectives: List[ObjectiveTerm] = [],
         constraints: List[ConstraintTerm] = [],
