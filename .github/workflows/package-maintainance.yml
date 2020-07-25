@@ -1,0 +1,48 @@
+name: Package maintenance
+
+on: push
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - uses: dschep/install-poetry-action@v1.3
+    - name: Install dependencies
+      run: poetry install
+    - name: Test with mamba
+      run: |
+        poetry run mamba --enable-coverage tests/*
+        poetry run coverage xml
+    - name: Upload coverage to codecov
+      uses: codecov/codecov-action@v1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.xml
+        flags: unittests
+
+  publish:
+    needs: test
+    runs-on: ubuntu-latest
+        steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - uses: dschep/install-poetry-action@v1.3
+    - name: Install dependencies
+      run: poetry install
+    - name: Build
+      run: poetry build
+    - name: Setup poetry config to publish
+        env:
+          PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          poetry config http-basic.pypi ${PYPI_USERNAME} ${PYPI_PASSWORD}
+    - name: Publish
+      run: poetry publish
+      if: contains(github.ref, 'tags/v')
