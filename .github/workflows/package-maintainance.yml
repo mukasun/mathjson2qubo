@@ -38,11 +38,10 @@ jobs:
     - name: Build
       run: poetry build
     - name: Setup poetry config to publish
-        env:
-          PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
-          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: |
-          poetry config http-basic.pypi ${PYPI_USERNAME} ${PYPI_PASSWORD}
+      env:
+        PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: poetry config http-basic.pypi ${PYPI_USERNAME} ${PYPI_PASSWORD}
     - name: Publish
       run: poetry publish
       if: contains(github.ref, 'tags/v')
