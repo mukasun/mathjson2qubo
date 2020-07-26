@@ -225,7 +225,7 @@ class Parser:
                 if "sub" in arg:
                     result = self._sub(arg, index)
                 else:
-                    result = eval("float(self.{})".format(arg["sym"]))
+                    result = eval("self.{}".format(arg["sym"]))
         elif "num" in arg:
             result = float(arg["num"])
         elif "fn" in arg:
