@@ -225,7 +225,12 @@ class Parser:
                 if "sub" in arg:
                     result = self._sub(arg, index)
                 else:
-                    result = eval("self.{}".format(arg["sym"]))
+                    try:
+                        result = eval("self.{}".format(arg["sym"]))
+                    except AttributeError:
+                        raise VariableAccessError(
+                            code=3001, message="not found the variable."
+                        )
         elif "num" in arg:
             result = float(arg["num"])
         elif "fn" in arg:
