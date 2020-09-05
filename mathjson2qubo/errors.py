@@ -18,7 +18,7 @@ class MathJsonFormatError(ParserError):
 
 
 class VariableAccessError(ParserError):
-    def __init__(self, code: int = 3000, message: str = "variable acess error."):
+    def __init__(self, code: int = 3000, message: str = "variable access error."):
         super().__init__(code, message)
 
 

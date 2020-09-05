@@ -195,6 +195,10 @@ class Parser:
         superscript = self.parse_mathjson(arg["sup"], index)
         if isinstance(superscript, (Express, list)):
             raise SuperScriptError(code=7002, message="index must be number.")
+        if int(superscript) >= 3 and isinstance(base, Express):
+            raise SuperScriptError(
+                code=7003, message="must not include a cubic (and more) term."
+            )
         return base ** int(superscript)
 
     def _sub(self, arg: dict, index: Dict[str, int] = None) -> ComputableTerm:

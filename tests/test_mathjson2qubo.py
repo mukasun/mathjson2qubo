@@ -339,6 +339,18 @@ with description("Parser") as self:
                     raise_error(SuperScriptError)
                 )
 
+        with context("include a cubic (and more) term"):
+            with it("raise SuperScriptError"):
+                arg = {"sym": "x", "sup": {"num": 3}}
+                expect(lambda: self.parser._sup(Binary("x"), arg)).to(
+                    raise_error(SuperScriptError)
+                )
+
+                arg = {"sym": "x", "sup": {"num": 4}}
+                expect(lambda: self.parser._sup(Binary("x"), arg)).to(
+                    raise_error(SuperScriptError)
+                )
+
     with description("_sub()"):
         with context("variable is linear"):
             with before.each:
