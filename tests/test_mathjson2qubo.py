@@ -19,22 +19,17 @@ from pyqubo.core.express import Binary, Spin
 with description("Parser") as self:
     with before.each:
         self.parser = Parser(
-            vartype="binary", variables=[{"dimension": 1, "size": 4, "symbol": "x"}]
+            variables=[{"dimension": 1, "size": 4, "symbol": "x", "type": "BINARY"}]
         )
 
     with description("__init__()"):
-        with context("call with invalid vartype"):
-            with it("raise ParserInitArgumentsError"):
-                expect(lambda: Parser(vartype="hoge", variables=[])).to(
-                    raise_error(ParserInitArgumentsError)
-                )
-
         with context("call with variable whose symbol is more than 2 characters"):
             with it("raise ParserInitArgumentsError"):
                 expect(
                     lambda: Parser(
-                        vartype="spin",
-                        variables=[{"symbol": "s1", "dimension": 0, "size": 0}],
+                        variables=[
+                            {"symbol": "s1", "dimension": 0, "size": 0, "type": "SPIN"}
+                        ],
                     )
                 ).to(raise_error(ParserInitArgumentsError))
 
@@ -42,25 +37,33 @@ with description("Parser") as self:
             with it("raise ParserInitArgumentsError"):
                 expect(
                     lambda: Parser(
-                        vartype="spin",
-                        variables=[{"symbol": "s", "dimension": -1, "size": 0}],
+                        variables=[
+                            {"symbol": "s", "dimension": -1, "size": 0, "type": "SPIN"}
+                        ],
                     )
                 ).to(raise_error(ParserInitArgumentsError))
 
         with context("call with variable whose dimension is 0"):
-            with context("vartype is spin"):
-                with it("set single spin"):
+            with context("vartype is SPIN"):
+                with it("set single SPIN"):
                     parser = Parser(
-                        vartype="spin",
-                        variables=[{"symbol": "x", "dimension": 0, "size": 0}],
+                        variables=[
+                            {"symbol": "x", "dimension": 0, "size": 0, "type": "SPIN"}
+                        ],
                     )
                     expect(parser.x).to(equal(Spin("x")))
 
             with context("vartype is binary"):
                 with it("set single binary"):
                     parser = Parser(
-                        vartype="binary",
-                        variables=[{"symbol": "x", "dimension": 0, "size": 0}],
+                        variables=[
+                            {
+                                "symbol": "x",
+                                "dimension": 0,
+                                "size": 0,
+                                "type": "BINARY",
+                            }
+                        ],
                     )
                     expect(parser.x).to(equal(Binary("x")))
 
@@ -108,8 +111,9 @@ with description("Parser") as self:
             self.size = 4
             self.constant_values = [1, 2, 3, 4]
             self.parser = Parser(
-                vartype="binary",
-                variables=[{"dimension": 1, "size": self.size, "symbol": "x"}],
+                variables=[
+                    {"dimension": 1, "size": self.size, "symbol": "x", "type": "BINARY"}
+                ],
                 constants=[
                     {"symbol": "N", "values": self.size},
                     {"symbol": "n", "values": self.constant_values},
@@ -249,9 +253,13 @@ with description("Parser") as self:
                 self.size = 3
                 self.constants = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
                 self.parser = Parser(
-                    vartype="binary",
                     variables=[
-                        {"dimension": 2, "size": [self.size, self.size], "symbol": "x"},
+                        {
+                            "dimension": 2,
+                            "size": [self.size, self.size],
+                            "symbol": "x",
+                            "type": "BINARY",
+                        },
                     ],
                     constants=[
                         {"symbol": "N", "values": self.size},
@@ -357,12 +365,12 @@ with description("Parser") as self:
                 self.variable_label = "x"
                 self.variable_size = 4
                 self.parser = Parser(
-                    vartype="binary",
                     variables=[
                         {
                             "dimension": 1,
                             "size": self.variable_size,
                             "symbol": self.variable_label,
+                            "type": "BINARY",
                         }
                     ],
                 )
@@ -415,12 +423,12 @@ with description("Parser") as self:
                 self.variable_label = "x"
                 self.variable_size = [4, 4]
                 self.parser = Parser(
-                    vartype="binary",
                     variables=[
                         {
                             "dimension": 2,
                             "size": self.variable_size,
                             "symbol": self.variable_label,
+                            "type": "BINARY",
                         }
                     ],
                 )
@@ -462,12 +470,12 @@ with description("Parser") as self:
             self.constant_label = "n"
             self.constant_value = 10
             self.parser = Parser(
-                vartype="binary",
                 variables=[
                     {
                         "dimension": 1,
                         "size": self.variable_size,
                         "symbol": self.variable_label,
+                        "type": "BINARY",
                     },
                 ],
                 constants=[
