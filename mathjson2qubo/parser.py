@@ -25,6 +25,7 @@ Term = Union[float, List[int], Express]
 class Variable(TypedDict):
     symbol: str
     dimension: int
+    type: str
     size: Union[int, list]
 
 
@@ -46,16 +47,11 @@ class ConstraintTerm(TypedDict):
 
 
 class Parser:
-    def __init__(
-        self, vartype: str, variables: List[Variable], constants: List[Constant] = []
-    ):
-        # set variable type
-        self.vartype: str = vartype.upper()
-        self.x = np.array([[]])  # for test
-        if self.vartype not in ["SPIN", "BINARY"]:
-            raise ParserInitArgumentsError(
-                code=1001, message="vartype must be 'spin' or 'binary'."
-            )
+    def __init__(self, variables: List[Variable], constants: List[Constant] = []):
+        if len(variables) == 0:
+            raise ParserInitArgumentsError(code=1001, message="variable is required.")
+
+        self.vartype = variables[0]["type"]
 
         # set variables
         for variable in variables:
@@ -65,14 +61,14 @@ class Parser:
                 )
 
             if variable["dimension"] == 0:
-                if self.vartype == "SPIN":
+                if variable["type"] == "SPIN":
                     var = Spin(variable["symbol"])
                 else:
                     var = Binary(variable["symbol"])
             elif variable["dimension"] == 1:
                 if isinstance(variable["size"], int):
                     var = Array.create(
-                        variable["symbol"], variable["size"], self.vartype
+                        variable["symbol"], variable["size"], variable["type"]
                     )
                 else:
                     raise ParserInitArgumentsError(
@@ -82,7 +78,7 @@ class Parser:
             elif variable["dimension"] >= 2:
                 if isinstance(variable["size"], list):
                     var = Array.create(
-                        variable["symbol"], tuple(variable["size"]), self.vartype
+                        variable["symbol"], tuple(variable["size"]), variable["type"]
                     )
                 else:
                     raise ParserInitArgumentsError(
