@@ -47,11 +47,13 @@ class ConstraintTerm(TypedDict):
 
 
 class Parser:
-    def __init__(self, variables: List[Variable], constants: List[Constant] = []):
+    def __init__(
+        self, vartype: str, variables: List[Variable], constants: List[Constant] = []
+    ):
         if len(variables) == 0:
             raise ParserInitArgumentsError(code=1001, message="variable is required.")
 
-        self.vartype = variables[0]["type"]
+        self.vartype = vartype
 
         # set variables
         for variable in variables:
